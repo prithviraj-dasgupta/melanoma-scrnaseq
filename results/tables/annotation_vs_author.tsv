@@ -1,0 +1,7 @@
+author_cell_type	B cell	CAF	Endothelial	Macrophage	Melanocytic	Mixed: CAF / Melanocytic	Plasma cell	T cell	Unclear	pDC
+B cell	456	0	2	2	1	0	12	41	0	1
+CAF	0	18	0	0	0	43	0	0	0	0
+Endothelial	0	0	65	0	0	0	0	0	0	0
+Macrophage	0	0	0	126	0	0	0	0	0	0
+NK cell	0	0	0	0	0	0	0	51	0	0
+T cell	13	0	4	11	7	1	0	2004	3	0

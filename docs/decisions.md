@@ -159,3 +159,56 @@ Results in `results/tables/cluster_composition.tsv`, `results/figures/umap_overv
 - One cluster (9) is mixed: 55 malignant and 54 non-malignant cells, mostly from Mel59.
   It is examined during annotation (Phase 4).
 - *Where:* `scripts/04_cluster.py`, README results.
+
+## 2026-11-24: Phase 4, marker-based annotation
+
+Results in `results/tables/cluster_annotation.tsv` (label, scores and top genes per cluster),
+`results/tables/annotation_vs_author.tsv`, `results/figures/marker_dotplot.png` and
+`results/figures/umap_annotation.png`.
+
+### D14. Annotate clusters, not single cells, from short canonical marker lists
+- Single-cell data are sparse: a gene can read zero in a cell that expresses it. Averaging
+  over a cluster is more robust than labelling each cell, at the cost of missing small
+  populations inside a cluster (see D16).
+- Each cell type has 3 to 5 textbook markers (`src/melscrna/annotate.py::MARKERS`), e.g.
+  CD3D/CD3E/CD2 for T cells, CD19/MS4A1/CD79A for B cells, PECAM1/VWF/CDH5 for endothelium,
+  COL1A1/COL1A2/COL3A1/DCN for fibroblasts, and PMEL/MLANA/TYR/MITF/SOX10 for the melanocyte
+  lineage.
+- Rules: the top-scoring type wins; if no list averages 2.5 or more the cluster is
+  `Unclear`; if a second, unrelated lineage scores at least 2 and at least half the top
+  score, it is `Mixed`. Plasma/B and NK/T pairs share genes for biological reasons and are
+  not called mixed.
+- Every label is checked against the cluster's own top genes from a Wilcoxon test (one
+  cluster vs the rest), which do not depend on our marker choice. For example, cluster 1's
+  top genes are CCL5, NKG7, CD8A and PRF1 (cytotoxic CD8 T cells), and cluster 7's are
+  TYROBP, AIF1, LYZ and CD68 (macrophages).
+- **"Melanocytic" is not "malignant".** Normal melanocytes express the same genes, and some
+  melanoma cells switch them off (D16). The malignant call is made from copy number in
+  Phase 5.
+
+### D15. Marker fixes found by looking at the data
+- The first plasma-cell markers (MZB1, IGJ/JCHAIN, DERL3) were also high in cluster 10,
+  whose top genes (IL3RA, PLD4, IRF7, IRF8) mark **plasmacytoid dendritic cells (pDCs)**,
+  which also express those genes. Plasma cells are now marked by SDC1 (CD138), PRDM1
+  (BLIMP1) and TNFRSF17 (BCMA), and a pDC list (LILRA4, IL3RA, CLEC4C, PLD4) was added.
+  This gives 19 pDCs and 25 plasma cells, neither of which is a category in the author
+  labels.
+
+### D16. Result: 93.7% agreement with author cell types, with honest gaps
+- Of 2,861 cells with an author cell type, our cluster labels agree for **2,681 (93.7%)**:
+  T cells 98.1%, B cells 90.9% (456 in the B-cell cluster and 12 in the plasma-cell
+  cluster; most of the other 47 sit in T-cell clusters 13 and 8), macrophages 100%,
+  endothelial 100%.
+- **NK cells: 0 of 51.** They sit inside the large cytotoxic T-cell cluster (cluster 1), and
+  a cluster-level method cannot pull out 51 cells from 1,045. Sub-clustering could, but is
+  out of scope; this is reported as a limitation.
+- **CAFs: 18 of 61.** The other 43 are in cluster 9, which is labelled `Mixed: CAF /
+  Melanocytic` because it combines 54 non-malignant cells (mostly CAFs) and 55 malignant
+  cells, mostly from Mel59.
+- **165 author-malignant cells are in `Unclear` clusters (3 and 15).** Cluster 3 (Mel81)
+  has low MITF and SOX10 and expresses collagens and FN1; cluster 15 (Mel82) keeps SOX10
+  and NCAM1 but loses MITF and PMEL. These look like de-differentiated, MITF-low melanoma
+  cells, which marker-based annotation cannot call. This motivates the copy-number step
+  (Phase 5) and the MITF/AXL question (Phase 6).
+- Overall, 1,078 of 1,257 author-malignant cells (85.8%) are in Melanocytic or mixed
+  Melanocytic clusters.
