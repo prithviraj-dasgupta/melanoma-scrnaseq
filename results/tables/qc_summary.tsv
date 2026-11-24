@@ -1,0 +1,5 @@
+step	unit	removed	remaining	reason
+start	cells	0	4645	cells in the deposited file
+genes detected outlier	cells	0	4645	outside 1,068 to 15,405 detected genes (median +/- 5 MADs, log scale)
+immune + melanocyte co-expression	cells	26	4619	PTPRC and PMEL/MLANA/TYR both > 7 log2(TPM/10+1), likely doublets
+rare genes	genes	1401	22285	detected in fewer than 3 cells (no information for clustering)

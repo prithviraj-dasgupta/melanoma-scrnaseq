@@ -79,3 +79,47 @@ MD5 `9c05cb22103d01d3086a2a952e97e96b`).
   left out of label-agreement statistics.
 - *Where:* `src/melscrna/load.py`, `scripts/02_inspect_data.py`,
   `results/tables/cells_per_tumour.tsv`.
+
+## 2026-11-24: Phase 2, quality control
+
+Results in `results/tables/qc_summary.tsv` and `results/figures/qc_distributions.png`.
+4,645 cells in, **4,619 cells x 22,285 genes out.**
+
+### D7. Cell filter on genes detected: median +/- 5 MADs (log scale) -> 0 cells removed
+- A cell with very few detected genes is usually an empty or broken well. One with very many
+  can be a doublet. We use a data-driven cut-off (median +/- 5 median absolute deviations,
+  on log1p values) rather than a fixed number, because "low" depends on the technology and
+  the tissue.
+- Bounds were 1,068 to 15,405 genes. No cell falls outside them, which is expected because
+  the authors filtered cells before deposit (D6).
+- **Why 5 MADs and not the stricter 3:** malignant cells detect more genes than immune cells
+  (median 5,523 vs 3,626), because they are larger and transcriptionally more active. A
+  3-MAD cut-off (1,822 to 9,035) would remove 75 cells, 31 of them malignant, mostly from
+  the high end. That is real biology, not poor quality, so a tight upper bound would bias
+  the dataset against tumour cells.
+- *Where:* `src/melscrna/qc.py::run_qc`, `scripts/03_qc.py`.
+
+### D8. Doublet check from marker co-expression -> 26 cells removed
+- Scrublet cannot be used (D3). Instead we use a biological rule: no single cell is both an
+  immune cell (PTPRC/CD45) and a melanocyte-lineage cell (PMEL, MLANA or TYR). Cells with
+  both above 7 log2(TPM/10+1) (about 1,270 TPM, i.e. strong expression of both) are removed.
+- 26 cells were removed. The authors had labelled all of them non-malignant (25 T cells,
+  1 NK cell).
+- We cannot tell whether these are true doublets (a T cell stuck to a melanoma cell) or
+  heavy contamination with tumour RNA. Either way their profile is mixed, so they are removed.
+- **Reported, not filtered:** at a lower level (any marker > 4, about 150 TPM), 308 of 2,068
+  T cells contain melanocyte transcripts. This graded, low-level signal looks like ambient
+  or contaminating tumour RNA rather than doublets, so those cells are kept. It is worth
+  remembering when interpreting T-cell expression.
+- The threshold of 7 is a judgement call and is stated as such.
+- *Where:* `src/melscrna/qc.py::flag_lineage_conflict`.
+
+### D9. Gene filter: detected in at least 3 cells -> 1,401 genes removed
+- Genes seen in fewer than 3 cells cannot help define cell populations and add noise.
+  840 genes were never detected at all.
+- *Where:* `src/melscrna/qc.py::run_qc`.
+
+### D10. Ribosomal share reported, not filtered
+- Ribosomal protein genes make up a median of 17% of TPM (13% in malignant cells, 18% in
+  non-malignant). There is no agreed cut-off for this on TPM data and it reflects cell
+  type, so it is plotted but not used to remove cells.
