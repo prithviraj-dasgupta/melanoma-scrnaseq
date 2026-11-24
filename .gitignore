@@ -1,0 +1,34 @@
+# Data and large outputs (never commit raw data, AnnData files or genome annotation).
+/data/
+/results/cache/
+*.h5ad
+*.gtf
+*.gtf.gz
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Local agent settings
+.claude/settings.local.json
+
+# Tiny test fixtures must always be committable. Keep this LAST.
+!tests/fixtures/**
