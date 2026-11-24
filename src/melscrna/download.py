@@ -12,6 +12,13 @@ GEO_URL = (
     "GSE72056_melanoma_single_cell_revised_v2.txt.gz"
 )
 
+# Gene coordinates for copy-number inference. GENCODE v19 is on hg19/GRCh37, the genome build
+# of the 2016 data, so gene symbols match as closely as possible.
+GENCODE_GTF_URL = (
+    "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_19/"
+    "gencode.v19.annotation.gtf.gz"
+)
+
 
 def md5sum(path: Path, chunk_size: int = 1 << 20) -> str:
     """Return the MD5 checksum of a file, read in chunks so memory use stays small."""

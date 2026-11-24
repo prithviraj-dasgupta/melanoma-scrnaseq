@@ -123,3 +123,39 @@ Results in `results/tables/qc_summary.tsv` and `results/figures/qc_distributions
 - Ribosomal protein genes make up a median of 17% of TPM (13% in malignant cells, 18% in
   non-malignant). There is no agreed cut-off for this on TPM data and it reflects cell
   type, so it is plotted but not used to remove cells.
+
+## 2026-11-24: Phase 3, embedding and clustering
+
+Results in `results/tables/cluster_composition.tsv`, `results/figures/umap_overview.png` and
+`results/figures/pca_elbow.png`.
+
+### D11. 2,000 highly variable genes, Seurat (dispersion) method
+- Most genes vary little between cells and only add noise. We keep the 2,000 genes whose
+  variance is highest relative to their mean.
+- The `seurat` flavour works on log-normalised values. The `seurat_v3` flavour, often used
+  for 10x data, models raw counts and so is not valid here (D3).
+- *Where:* `src/melscrna/cluster.py::embed_and_cluster`.
+
+### D12. 30 principal components, 15 neighbours, Leiden resolution 0.5 -> 20 clusters
+- Genes are scaled (mean 0, variance 1, clipped at 10) before PCA, so highly expressed genes
+  do not dominate. PC1 explains 4.2% of variance and the curve flattens after about 20 PCs
+  (`pca_elbow.png`); we use 30 to be safe, which together explain 22.1%.
+- Leiden finds communities in the 15-nearest-neighbour graph. Resolution controls how many:
+  0.5 gives 20 clusters, which is enough to separate the main cell types without splitting
+  them into many small groups that are hard to label. Random seeds are fixed (0).
+- UMAP is used only to draw the data. Distances between far-apart UMAP islands are not
+  meaningful, so no conclusions are drawn from them.
+- *Where:* `src/melscrna/cluster.py`, `scripts/04_cluster.py`.
+
+### D13. No batch correction across patients
+- Malignant cells cluster by patient: in the 7 clusters that are at least 80% malignant, a
+  median of 99% of cells come from a single tumour. In the 12 clusters that are at most 20%
+  malignant, the median is only 28%; immune and stromal cells from different patients mix.
+- This matches Tirosh et al.: each patient's tumour has its own copy-number changes and
+  expression programme, while normal cell types look alike across people. If it were a
+  technical batch effect, non-malignant cells from the same patient would also group
+  together, and they do not.
+- Batch correction (e.g. Harmony) would remove this real biology, so it is not used.
+- One cluster (9) is mixed: 55 malignant and 54 non-malignant cells, mostly from Mel59.
+  It is examined during annotation (Phase 4).
+- *Where:* `scripts/04_cluster.py`, README results.
