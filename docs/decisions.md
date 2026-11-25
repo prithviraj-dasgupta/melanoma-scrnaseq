@@ -310,13 +310,13 @@ Results in `results/tables/programme_genes.tsv`, `programme_scores.tsv`,
   enter the programmes. A number that moves that much with the split cannot be quoted
   on its own. *Where:* `results/tables/programme_split_stability.tsv`.
 - **Within tumours, the MITF and AXL programmes are weakly anti-correlated.** Across 50
-  splits, the median within-tumour Spearman rho is **-0.13** (90% of splits between -0.23
-  and -0.02). It is negative in every split and has p < 0.05 in 78% of them. So the
+  splits, the median within-tumour Spearman rho is **-0.15** (90% of splits between -0.25
+  and -0.03). It is negative in 48 of 50 splits and has p < 0.05 in 78% of them. So the
   direction is reliable, but the effect is small. Per-tumour correlations swing widely
   between splits (Mel80 went from -0.01 to -0.45), so they are not reported as findings.
-- **The big, robust differences are between tumours.** In Mel53 and Mel82, 100% of
-  malignant cells are AXL-dominant in every split, and in Mel81 at least 85% (median
-  100%). In Mel78 the median is 6% (range 2-14%) and in Mel88 12% (7-23%). Mel81 and Mel82
+- **The big, robust differences are between tumours.** In Mel53, 100% of malignant cells
+  are AXL-dominant in every split; in Mel81 and Mel82 the median is 100% (lowest 88% and
+  78%). In Mel78 the median is 5% (range 2-21%) and in Mel88 11% (4-39%). Mel81 and Mel82
   are the de-differentiated cells that marker-based annotation could not label (clusters
   3 and 15). Tumours with fewer than 20 malignant cells vary a lot between splits.
 - Across the 11 tumours with at least 10 malignant cells, median MITF and AXL scores are

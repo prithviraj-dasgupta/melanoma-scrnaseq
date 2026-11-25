@@ -89,10 +89,10 @@ programmes were learned without labels and look biologically sensible. The MITF 
 includes MLANA, PMEL, TYR and GPR143. The AXL programme includes NGFR, TNC and LIF.
 - Every result was repeated over **50 random learn/test splits**, because the first single
   split turned out to be fragile (D24).
-- In Mel53 and Mel82, 100% of malignant cells are AXL-dominant in every split, and in Mel81
-  the median is 100%. In Mel78 and Mel88 the medians are only 6% and 12%.
+- In Mel53, Mel81 and Mel82 the median is 100% of malignant cells AXL-dominant (never below
+  78% in any split). In Mel78 and Mel88 the medians are only 5% and 11%.
 - Within tumours the two programmes are only **weakly anti-correlated: median Spearman
-  rho = -0.13** (90% of splits between -0.23 and -0.02). It is negative in all 50 splits
+  rho = -0.15** (90% of splits between -0.25 and -0.03). It is negative in 48 of 50 splits
   and significant (p < 0.05) in 78%. Correlations inside single tumours are not stable
   across splits, so I don't report them.
 
