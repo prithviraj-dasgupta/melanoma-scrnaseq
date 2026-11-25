@@ -1,0 +1,5 @@
+reference	window_genes	agreement	sensitivity	specificity	stromal_or_myeloid_called_malignant
+one per cell type	100	0.915	0.733	0.986	4
+one per cell type	150	0.94	0.823	0.986	5
+pooled	100	0.961	0.898	0.985	26
+pooled	150	0.973	0.946	0.984	27

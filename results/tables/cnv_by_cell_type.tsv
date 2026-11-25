@@ -1,0 +1,11 @@
+cell_type	malignant	non-malignant
+B cell	0	572
+CAF	0	32
+Endothelial	0	92
+Macrophage	4	193
+Melanocytic	766	326
+Mixed: CAF / Melanocytic	51	65
+Plasma cell	0	25
+T cell	47	2236
+Unclear	125	66
+pDC	0	19

@@ -212,3 +212,66 @@ Results in `results/tables/cluster_annotation.tsv` (label, scores and top genes 
   (Phase 5) and the MITF/AXL question (Phase 6).
 - Overall, 1,078 of 1,257 author-malignant cells (85.8%) are in Melanocytic or mixed
   Melanocytic clusters.
+
+## 2026-11-24: Phase 5, copy-number inference and malignant calls
+
+Results in `results/tables/cnv_vs_author.tsv`, `cnv_sensitivity_per_tumour.tsv`,
+`cnv_by_cell_type.tsv`, `cnv_sensitivity_analysis.tsv`, and `results/figures/cnv_heatmap.png`
+and `cnv_signal_vs_correlation.png`.
+
+### D17. Gene positions from GENCODE v19 (hg19), parsed by our own code
+- infercnvpy needs each gene's chromosome and position. GENCODE v19 matches the genome
+  build of the 2016 data. 20,652 of 22,285 genes (92.7%) were placed; the rest (mostly
+  old or non-standard symbols) are skipped.
+- chrY is left out, so the CNV profile cannot pick up patient sex.
+- We parse the GTF ourselves (`read_gene_positions`, ~30 lines, tested) instead of adding
+  the `gtfparse` dependency.
+
+### D18. Reference = half of the immune and stromal cells, one baseline per cell type
+- The reference comes from **our** marker-based labels (Phase 4), not the author labels,
+  so the comparison with the authors is not fed their answer.
+- Cells in T, B, plasma, macrophage, pDC, endothelial and CAF clusters are split 50/50
+  within each type (seed 0): 1,610 reference cells and 1,610 held-out normal cells. The
+  1,399 cells in Melanocytic, Mixed and Unclear clusters are the query.
+- Each normal cell type is its own reference category. With a single pooled reference
+  (mostly T cells), genes that fibroblasts express from neighbouring loci look like copy
+  gains, and 17 of 32 CAFs were called malignant. With per-type references, 0 are.
+- *Where:* `src/melscrna/cnv.py::split_reference`, `scripts/06_cnv.py`.
+
+### D19. HLA genes excluded
+- The MHC region on chr6p21 is a dense cluster of genes expressed far more in immune cells.
+  Against an immune reference it showed up as a "deletion" in every non-immune cell (a
+  vertical stripe on chr6 in the first heatmap). The 25 HLA genes are removed before
+  inference. The pattern also covers immunoglobulin and T-cell receptor segment genes, but
+  none are in this file.
+
+### D20. Malignant call: two CNV measures, thresholds from held-out normal cells
+- Following Tirosh et al., each cell gets a **CNV signal** (mean squared CNV value) and a
+  **CNV correlation** with its own tumour's consensus profile (mean of the 10% of that
+  tumour's cells with the highest signal, chosen without labels).
+- A cell is malignant if either measure is above the 99th percentile of the **held-out**
+  normal cells (signal > 0.0102 or correlation > 0.563). The reference cells cannot be used
+  for this because their profiles are flat by construction, which would set the bar too
+  low.
+- 23 of 1,610 held-out normal cells (1.4%) pass, close to the 1-2% expected from two 99th
+  percentile cut-offs.
+- Window: the infercnvpy default of 100 genes.
+
+### D21. Result: 91.5% agreement, high specificity, moderate sensitivity
+- Against the author labels (132 unresolved cells excluded): **agreement 91.5%,
+  sensitivity 73.3% (921 of 1,257), specificity 98.6% (3,184 of 3,230).**
+- Sensitivity varies by tumour: at least 85% in 7 of the 15 tumours with author-malignant
+  cells, but 59% in Mel79 (278 of 468) and 0 of 3 in Mel75. The heatmap shows that Mel79's
+  missed cells do carry its CNV pattern (losses on chr10, 13 and 19), just more weakly
+  than the threshold. The cut-off is deliberately strict.
+- The Unclear clusters from Phase 4 are mostly malignant by copy number: 107 of 155 cells
+  in cluster 3 and 18 of 36 in cluster 15. So the MITF-low cells that markers could not
+  place are tumour cells.
+- **Sensitivity analysis** (`cnv_sensitivity_analysis.tsv`): a pooled reference raises
+  sensitivity to 89.8% (100-gene window) or 94.6% (150), but calls 26 to 27 CAF,
+  endothelial or macrophage cells malignant. A 150-gene window with per-type references
+  gives 82.7%. We keep the stricter main setting because the next question (AXL-high
+  malignant cells) would be biased by fibroblasts called malignant, since fibroblasts
+  express AXL. This choice was made for that reason, not to maximise agreement.
+- Reminder (D4): the author labels were themselves partly CNV-based, so agreement means
+  two CNV methods agree, not that either is ground truth.
