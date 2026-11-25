@@ -21,6 +21,27 @@ FIGURES = ROOT / "results" / "figures"
 NORMAL_TYPES = ["T cell", "B cell", "Plasma cell", "Macrophage", "pDC", "Endothelial", "CAF"]
 N_GENES = 50
 MIN_CELLS = 10  # tumours with fewer held-out malignant cells are not tested on their own
+N_SPLITS = 50  # repeat the learn/test split to see how much results depend on it (D24)
+
+
+def one_split(expr: pd.DataFrame, tumour: pd.Series, seed: int) -> dict:
+    """Learn programmes on one random half, score the other half; return the key numbers."""
+    train = split_half(tumour, seed=seed)
+    centred = centre_within(expr[train], tumour[train])
+    mitf = derive_program(centred, "MITF", N_GENES, exclude=["AXL"])
+    axl = derive_program(centred, "AXL", N_GENES, exclude=["MITF"])
+    m, a = score_program(expr, mitf, expr), score_program(expr, axl, expr)
+    held = ~train
+    within = centre_within(pd.DataFrame({"M": m[held], "A": a[held]}), tumour[held])
+    frac = ((a - m) > 0).groupby(tumour).mean()
+    return {
+        "seed": seed,
+        "pooled_rho": spearmanr(m[held], a[held]).statistic,
+        "within_rho": spearmanr(within["M"], within["A"]).statistic,
+        "within_p": spearmanr(within["M"], within["A"]).pvalue,
+        **{f"frac_AXL_{t}": v for t, v in frac.items()},
+    }
+
 
 if __name__ == "__main__":
     TABLES.mkdir(parents=True, exist_ok=True)
@@ -106,6 +127,24 @@ if __name__ == "__main__":
     )
     print("\nBy Phase 3 cluster:")
     print(by_cluster.round(2).to_string())
+
+    # The numbers above come from one random split (seed 0). Repeat with other splits: a
+    # result worth reporting should not depend on which half of the cells was used.
+    print(f"\nRepeating with {N_SPLITS} random splits (takes a few minutes)...")
+    stab = pd.DataFrame([one_split(expr, tumour, s) for s in range(N_SPLITS)])
+    stab.round(4).to_csv(TABLES / "programme_split_stability.tsv", sep="\t", index=False)
+    for col in ["pooled_rho", "within_rho"]:
+        lo, med, hi = np.percentile(stab[col], [5, 50, 95])
+        print(f"{col}: median {med:.2f}, 90% of splits between {lo:.2f} and {hi:.2f}")
+    print(
+        f"within_rho < 0 in {(stab['within_rho'] < 0).mean():.0%} of splits; "
+        f"p < 0.05 in {(stab['within_p'] < 0.05).mean():.0%}"
+    )
+    frac_cols = [c for c in stab.columns if c.startswith("frac_AXL_")]
+    frac = stab[frac_cols].agg(["min", "median", "max"]).T
+    frac.index = [c.removeprefix("frac_AXL_") for c in frac.index]
+    print("\nFraction AXL-dominant per tumour across splits:")
+    print(frac.sort_values("median").round(2).to_string())
 
     fig, axes = plt.subplots(1, 2, figsize=(13, 5))
     order = per_tumour.index.tolist()

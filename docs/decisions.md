@@ -282,10 +282,10 @@ Results in `results/tables/programme_genes.tsv`, `programme_scores.tsv`,
 `programmes_per_tumour.tsv` and `results/figures/mitf_axl_programmes.png`.
 
 ### D22. Which cells: CNV-called malignant cells outside immune/stromal clusters
-- 941 cells from 14 tumours. Using our CNV calls (not the author labels) keeps the analysis
+- 942 cells from 14 tumours. Using our CNV calls (not the author labels) keeps the analysis
   self-contained. Excluding the few immune or stromal cells that passed the CNV threshold
   stops, for example, fibroblasts (which express AXL) from inflating the AXL state.
-- Genes detected in more than 10% of these cells are used (12,567).
+- Genes detected in more than 10% of these cells are used (12,568).
 
 ### D23. Programmes learned on one half of the cells, tested on the other
 - A single gene is noisy in one cell, so each state is a programme: the 50 genes most
@@ -303,26 +303,35 @@ Results in `results/tables/programme_genes.tsv`, `programme_scores.tsv`,
   this dataset, not an absolute biological state.
 
 ### D24. Result: the states differ mainly between patients; the within-tumour link is weak
-- **Within tumours, the MITF and AXL programmes are only weakly anti-correlated:** Spearman
-  rho = -0.10 (p = 0.04) across 473 held-out cells. On its own, only Mel79 (rho -0.34,
-  140 cells) and Mel78 (-0.30, 57 cells) show a clear negative correlation. The other 6
-  tumours that could be tested show no significant correlation in either direction.
-- **The big differences are between tumours.** In Mel81, Mel82 and Mel53, 99-100% of
-  malignant cells are AXL-dominant. In Mel78, Mel88 and Mel80 only 7-22% are. Mel81 and
-  Mel82 are the de-differentiated cells that marker-based annotation could not label
-  (clusters 3 and 15).
+- **The first run was not robust to the random split, so every result is now repeated over
+  50 splits.** With seed 0, the within-tumour correlation was rho = -0.10 on Linux and
+  -0.23 on the Mac. The only difference was one extra Mel79 cell called malignant on the
+  Mac (D21 note), which reshuffles every later tumour's split and so changes which genes
+  enter the programmes. A number that moves that much with the split cannot be quoted
+  on its own. *Where:* `results/tables/programme_split_stability.tsv`.
+- **Within tumours, the MITF and AXL programmes are weakly anti-correlated.** Across 50
+  splits, the median within-tumour Spearman rho is **-0.13** (90% of splits between -0.23
+  and -0.02). It is negative in every split and has p < 0.05 in 78% of them. So the
+  direction is reliable, but the effect is small. Per-tumour correlations swing widely
+  between splits (Mel80 went from -0.01 to -0.45), so they are not reported as findings.
+- **The big, robust differences are between tumours.** In Mel53 and Mel82, 100% of
+  malignant cells are AXL-dominant in every split, and in Mel81 at least 85% (median
+  100%). In Mel78 the median is 6% (range 2-14%) and in Mel88 12% (7-23%). Mel81 and Mel82
+  are the de-differentiated cells that marker-based annotation could not label (clusters
+  3 and 15). Tumours with fewer than 20 malignant cells vary a lot between splits.
 - Across the 11 tumours with at least 10 malignant cells, median MITF and AXL scores are
-  negatively but not significantly correlated (rho -0.30, p = 0.37). Eleven tumours is too
-  few to say more.
+  negatively but not significantly correlated (seed 0: rho -0.32, p = 0.34). Eleven
+  tumours is too few to say more.
 - **What this does and does not show.** It is consistent with Tirosh et al. that MITF-high
-  and AXL-high states exist and that tumours differ in their mix. It gives only weak
-  support for a strong anti-correlation within each tumour, and with Smart-seq2 data from
-  up to 279 malignant cells per tumour we cannot say whether that is biology or limited
-  power. There is no treatment information here, so nothing can be said about drug
-  resistance itself.
+  and AXL-high states exist and that tumours differ strongly in their mix. Within a
+  tumour, cells high in one programme tend to be slightly lower in the other, but the
+  link is weak. With Smart-seq2 data from at most 280 malignant cells per tumour we cannot
+  say whether that is biology or limited power. There is no treatment information here,
+  so nothing can be said about drug resistance itself.
 
 ### Note on reproducibility across machines
 - The numbers in this log come from runs on macOS (Apple Silicon). Re-running on Linux gave
   the same QC, clusters and headline CNV metrics, but a few cells near a threshold can
-  flip (e.g. 278 vs 279 Mel79 cells called malignant), because floating-point results
+  flip (e.g. 278 vs 279 Mel79 cells called malignant, and 941 vs 942 malignant cells in
+  Phase 6), because floating-point results
   differ slightly between platforms. UMAP layouts also look rotated between machines.
