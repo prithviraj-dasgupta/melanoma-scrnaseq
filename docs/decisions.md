@@ -259,9 +259,9 @@ and `cnv_signal_vs_correlation.png`.
 
 ### D21. Result: 91.5% agreement, high specificity, moderate sensitivity
 - Against the author labels (132 unresolved cells excluded): **agreement 91.5%,
-  sensitivity 73.3% (921 of 1,257), specificity 98.6% (3,184 of 3,230).**
+  sensitivity 73.3% (922 of 1,257), specificity 98.6% (3,184 of 3,230).**
 - Sensitivity varies by tumour: at least 85% in 7 of the 15 tumours with author-malignant
-  cells, but 59% in Mel79 (278 of 468) and 0 of 3 in Mel75. The heatmap shows that Mel79's
+  cells, but 60% in Mel79 (279 of 468) and 0 of 3 in Mel75. The heatmap shows that Mel79's
   missed cells do carry its CNV pattern (losses on chr10, 13 and 19), just more weakly
   than the threshold. The cut-off is deliberately strict.
 - The Unclear clusters from Phase 4 are mostly malignant by copy number: 107 of 155 cells
@@ -270,8 +270,59 @@ and `cnv_signal_vs_correlation.png`.
 - **Sensitivity analysis** (`cnv_sensitivity_analysis.tsv`): a pooled reference raises
   sensitivity to 89.8% (100-gene window) or 94.6% (150), but calls 26 to 27 CAF,
   endothelial or macrophage cells malignant. A 150-gene window with per-type references
-  gives 82.7%. We keep the stricter main setting because the next question (AXL-high
+  gives 82.3%. We keep the stricter main setting because the next question (AXL-high
   malignant cells) would be biased by fibroblasts called malignant, since fibroblasts
   express AXL. This choice was made for that reason, not to maximise agreement.
 - Reminder (D4): the author labels were themselves partly CNV-based, so agreement means
   two CNV methods agree, not that either is ground truth.
+
+## 2026-11-24: Phase 6, MITF-high vs AXL-high malignant states
+
+Results in `results/tables/programme_genes.tsv`, `programme_scores.tsv`,
+`programmes_per_tumour.tsv` and `results/figures/mitf_axl_programmes.png`.
+
+### D22. Which cells: CNV-called malignant cells outside immune/stromal clusters
+- 941 cells from 14 tumours. Using our CNV calls (not the author labels) keeps the analysis
+  self-contained. Excluding the few immune or stromal cells that passed the CNV threshold
+  stops, for example, fibroblasts (which express AXL) from inflating the AXL state.
+- Genes detected in more than 10% of these cells are used (12,567).
+
+### D23. Programmes learned on one half of the cells, tested on the other
+- A single gene is noisy in one cell, so each state is a programme: the 50 genes most
+  correlated with MITF or with AXL, computed **within tumours** (each tumour's mean
+  removed), so that genes are not picked just because some tumours are high in both.
+- Genes are chosen on a random half of the malignant cells in each tumour (seed 0). The
+  correlation tests use only the other half. Choosing genes and testing them on the same
+  cells would build in part of the answer.
+- The programmes look biologically sensible without being told what to find. The MITF
+  programme includes MLANA, PMEL, TYR, GPR143, S100B and ERBB3 (melanocyte
+  differentiation). The AXL programme includes NGFR, TNC, LIF and EMP1 (genes linked to
+  the invasive, undifferentiated melanoma state). The two share no genes.
+- A cell's programme score is the mean z-score of the programme genes. "AXL-dominant"
+  means AXL score above MITF score. Both are relative to the average malignant cell in
+  this dataset, not an absolute biological state.
+
+### D24. Result: the states differ mainly between patients; the within-tumour link is weak
+- **Within tumours, the MITF and AXL programmes are only weakly anti-correlated:** Spearman
+  rho = -0.10 (p = 0.04) across 473 held-out cells. On its own, only Mel79 (rho -0.34,
+  140 cells) and Mel78 (-0.30, 57 cells) show a clear negative correlation. The other 6
+  tumours that could be tested show no significant correlation in either direction.
+- **The big differences are between tumours.** In Mel81, Mel82 and Mel53, 99-100% of
+  malignant cells are AXL-dominant. In Mel78, Mel88 and Mel80 only 7-22% are. Mel81 and
+  Mel82 are the de-differentiated cells that marker-based annotation could not label
+  (clusters 3 and 15).
+- Across the 11 tumours with at least 10 malignant cells, median MITF and AXL scores are
+  negatively but not significantly correlated (rho -0.30, p = 0.37). Eleven tumours is too
+  few to say more.
+- **What this does and does not show.** It is consistent with Tirosh et al. that MITF-high
+  and AXL-high states exist and that tumours differ in their mix. It gives only weak
+  support for a strong anti-correlation within each tumour, and with Smart-seq2 data from
+  up to 279 malignant cells per tumour we cannot say whether that is biology or limited
+  power. There is no treatment information here, so nothing can be said about drug
+  resistance itself.
+
+### Note on reproducibility across machines
+- The numbers in this log come from runs on macOS (Apple Silicon). Re-running on Linux gave
+  the same QC, clusters and headline CNV metrics, but a few cells near a threshold can
+  flip (e.g. 278 vs 279 Mel79 cells called malignant), because floating-point results
+  differ slightly between platforms. UMAP layouts also look rotated between machines.
